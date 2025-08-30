@@ -1,0 +1,157 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Country {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  name        String
+  examBoards  ExamBoard[]
+  calendars   AcademicCalendarTemplate[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model ExamBoard {
+  id        String  @id @default(cuid())
+  code      String
+  name      String
+  country   Country @relation(fields: [countryId], references: [id])
+  countryId String
+  subjects  Subject[]
+  @@unique([code, countryId])
+}
+
+model Subject {
+  id         String  @id @default(cuid())
+  code       String
+  name       String
+  examBoard  ExamBoard @relation(fields: [examBoardId], references: [id])
+  examBoardId String
+  levels     Level[]
+  curricula  Curriculum[]
+  @@unique([code, examBoardId])
+}
+
+model Level {
+  id        String  @id @default(cuid())
+  code      String
+  name      String
+  subject   Subject @relation(fields: [subjectId], references: [id])
+  subjectId String
+  curricula Curriculum[]
+  @@unique([code, subjectId])
+}
+
+model Curriculum {
+  id        String  @id @default(cuid())
+  year      Int
+  subject   Subject @relation(fields: [subjectId], references: [id])
+  subjectId String
+  level     Level   @relation(fields: [levelId], references: [id])
+  levelId   String
+  topics    Topic[]
+  @@unique([subjectId, levelId, year])
+}
+
+model Topic {
+  id           String  @id @default(cuid())
+  code         String?
+  name         String
+  orderIndex   Int
+  curriculum   Curriculum @relation(fields: [curriculumId], references: [id])
+  curriculumId String
+  subtopics    Subtopic[]
+}
+
+model Subtopic {
+  id         String @id @default(cuid())
+  name       String
+  orderIndex Int
+  topic      Topic  @relation(fields: [topicId], references: [id])
+  topicId    String
+  objectives Objective[]
+}
+
+model Objective {
+  id         String @id @default(cuid())
+  statement  String
+  orderIndex Int
+  subtopic   Subtopic @relation(fields: [subtopicId], references: [id])
+  subtopicId String
+}
+
+model AcademicCalendarTemplate {
+  id        String   @id @default(cuid())
+  country   Country  @relation(fields: [countryId], references: [id])
+  countryId String
+  name      String
+  year      Int
+  term1Start DateTime
+  term1End   DateTime
+  term2Start DateTime?
+  term2End   DateTime?
+  term3Start DateTime?
+  term3End   DateTime?
+  holidays  Holiday[]
+  @@unique([countryId, year, name])
+}
+
+model Holiday {
+  id        String  @id @default(cuid())
+  template  AcademicCalendarTemplate @relation(fields: [templateId], references: [id])
+  templateId String
+  name      String
+  date      DateTime
+  @@unique([templateId, name, date])
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  role      String   @default("teacher")
+  passwordHash String?
+  createdAt DateTime @default(now())
+  accounts  Account[]
+  sessions  Session[]
+}
+
+model Account {
+  id                 String  @id @default(cuid())
+  userId             String
+  type               String
+  provider           String
+  providerAccountId  String
+  refresh_token      String?
+  access_token       String?
+  expires_at         Int?
+  token_type         String?
+  scope              String?
+  id_token           String?
+  session_state      String?
+  user               User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
