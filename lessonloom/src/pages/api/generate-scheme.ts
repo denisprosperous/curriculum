@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { prisma } from '@/lib/db';
+import { addDays, eachWeekOfInterval, isSunday } from 'date-fns';
 
 type GenerateBody = {
   subjectId: string;
@@ -24,7 +25,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const start = new Date(startDate);
   const end = new Date(endDate);
   const days = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
-  const weeks = Math.max(1, Math.ceil(days / 7));
+  const weekStarts = eachWeekOfInterval({ start, end }, { weekStartsOn: 1 });
+  const weeks = Math.max(1, weekStarts.length);
   const totalSlots = weeks * lessonsPerWeek;
 
   const objectives = curriculum.topics.flatMap((t) =>
@@ -39,11 +41,26 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     schedule[weekIndex]?.entries.push(objectives[i]);
   }
 
-  return res.status(200).json({
-    curriculumId: curriculum.id,
-    weeks,
-    lessonsPerWeek,
-    schedule,
-    unallocated: objectives.slice(totalSlots),
+  // Persist scheme
+  const scheme = await prisma.scheme.create({
+    data: {
+      subjectId,
+      levelId,
+      curriculumId: curriculum.id,
+      startDate: start,
+      endDate: end,
+      lessonsPerWeek,
+      weeks: {
+        create: schedule.map((w, idx) => ({
+          weekNumber: w.week,
+          weekStartDate: weekStarts[idx] ?? addDays(start, (w.week - 1) * 7),
+          weekEndDate: addDays((weekStarts[idx] ?? addDays(start, (w.week - 1) * 7)), 6),
+          entries: { create: w.entries.map((e, j) => ({ orderIndex: j + 1, topic: e.topic, subtopic: e.subtopic, objective: e.objective })) },
+        })),
+      },
+    },
+    include: { weeks: { include: { entries: true } } },
   });
+
+  return res.status(200).json({ scheme, unallocated: objectives.slice(totalSlots) });
 }
