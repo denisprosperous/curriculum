@@ -1,8 +1,11 @@
 {
   "/_not-found/page": "app/_not-found/page.js",
-  "/calendar/page": "app/calendar/page.js",
-  "/planner/page": "app/planner/page.js",
-  "/page": "app/page.js",
   "/(auth)/sign-in/page": "app/(auth)/sign-in/page.js",
-  "/(auth)/sign-up/page": "app/(auth)/sign-up/page.js"
+  "/(auth)/sign-up/page": "app/(auth)/sign-up/page.js",
+  "/admin/resources/page": "app/admin/resources/page.js",
+  "/calendar/page": "app/calendar/page.js",
+  "/marketplace/page": "app/marketplace/page.js",
+  "/page": "app/page.js",
+  "/planner/page": "app/planner/page.js",
+  "/library/page": "app/library/page.js"
 }

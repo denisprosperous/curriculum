@@ -192,6 +192,40 @@ async function main() {
   });
 
   console.log('Seeded baseline data for CM, GH, NG, KE, UG, ZA.');
+
+  // Seed marketplace resources (Cameroon GCE O/A Level samples)
+  const camSubjects = await prisma.subject.findMany({ where: { examBoardId: (await prisma.examBoard.findFirst({ where: { code: 'GCE' } }))?.id } });
+  const math = camSubjects.find(s => s.code === 'MATH');
+  if (math) {
+    const lower = await prisma.level.findFirst({ where: { subjectId: math.id, code: 'LOWER' } });
+    const upper = await prisma.level.findFirst({ where: { subjectId: math.id, code: 'UPPER' } });
+    await prisma.resource.upsert({
+      where: { sku: 'CM-GCE-MATH-LOWER-TERM1-PACK' },
+      update: {},
+      create: {
+        sku: 'CM-GCE-MATH-LOWER-TERM1-PACK',
+        title: 'Cameroon GCE O Level Mathematics - Term 1 Pack',
+        subjectId: math.id,
+        levelId: lower?.id ?? undefined,
+        description: 'Slides, worksheets, answers, assessments (Term 1).',
+        priceCents: 3900,
+        fileKey: 'resources/cm/gce/math/ol/term1-pack.pdf',
+      },
+    });
+    await prisma.resource.upsert({
+      where: { sku: 'CM-GCE-MATH-UPPER-TERM1-PACK' },
+      update: {},
+      create: {
+        sku: 'CM-GCE-MATH-UPPER-TERM1-PACK',
+        title: 'Cameroon GCE A Level Mathematics - Term 1 Pack',
+        subjectId: math.id,
+        levelId: upper?.id ?? undefined,
+        description: 'Advanced practice, slides, assessments (Term 1).',
+        priceCents: 5900,
+        fileKey: 'resources/cm/gce/math/al/term1-pack.pdf',
+      },
+    });
+  }
 }
 
 main()

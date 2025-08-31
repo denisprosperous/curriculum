@@ -16,6 +16,9 @@ export default async function HomePage() {
               <div className="space-x-2">
                 <Link href="/planner" className="rounded bg-indigo-600 px-3 py-2 text-white">Open Planner</Link>
                 <Link href="/calendar" className="rounded bg-slate-700 px-3 py-2 text-white">Calendar Editor</Link>
+                <Link href="/marketplace" className="rounded bg-emerald-600 px-3 py-2 text-white">Marketplace</Link>
+                <Link href="/library" className="rounded border px-3 py-2">Library</Link>
+                <Link href="/admin/resources" className="rounded border px-3 py-2">Admin</Link>
               </div>
             </div>
           ) : (
