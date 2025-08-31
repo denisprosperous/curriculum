@@ -130,7 +130,7 @@ async function main() {
   await createCountryBundle({
     code: 'GH', name: 'Ghana',
     board: { code: 'WAEC', name: 'WAEC (WASSCE/BECE)' },
-    subjects: [ { code: 'MATH', name: 'Mathematics' } ],
+    subjects: [ { code: 'MATH', name: 'Mathematics' }, { code: 'ENG', name: 'English Language' }, { code: 'SCI', name: 'Integrated Science' } ],
     calendar: {
       name: 'National 2024/25', year: 2024,
       term1Start: '2024-09-16', term1End: '2024-12-06',
@@ -143,7 +143,7 @@ async function main() {
   await createCountryBundle({
     code: 'NG', name: 'Nigeria',
     board: { code: 'WAEC', name: 'WAEC (SSCE)' },
-    subjects: [ { code: 'MATH', name: 'Mathematics' } ],
+    subjects: [ { code: 'MATH', name: 'Mathematics' }, { code: 'ENG', name: 'English Language' }, { code: 'PHY', name: 'Physics' }, { code: 'CHEM', name: 'Chemistry' } ],
     calendar: {
       name: 'National 2024/25', year: 2024,
       term1Start: '2024-09-09', term1End: '2024-12-13',
@@ -156,7 +156,7 @@ async function main() {
   await createCountryBundle({
     code: 'KE', name: 'Kenya',
     board: { code: 'KNEC', name: 'KNEC (KCSE)' },
-    subjects: [ { code: 'MATH', name: 'Mathematics' } ],
+    subjects: [ { code: 'MATH', name: 'Mathematics' }, { code: 'ENG', name: 'English' }, { code: 'BIO', name: 'Biology' }, { code: 'CHEM', name: 'Chemistry' } ],
     calendar: {
       name: 'National 2024', year: 2024,
       term1Start: '2024-01-08', term1End: '2024-04-05',

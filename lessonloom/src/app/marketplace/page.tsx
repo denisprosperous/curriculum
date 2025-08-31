@@ -12,13 +12,27 @@ export default function MarketplacePage() {
   }, []);
   const purchase = async (resourceId: string) => {
     if (!userId) return alert('Sign in first');
-    const res = await fetch('/api/marketplace/purchase', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId, resourceId }) });
-    if (res.ok) alert('Purchased! Check your library.');
+    const provider = (document.getElementById('provider') as HTMLSelectElement)?.value || 'stripe';
+    const endpoint = provider === 'paystack' ? '/api/payments/paystack/checkout' : provider === 'flutterwave' ? '/api/payments/flutterwave/checkout' : '/api/payments/stripe/checkout';
+    const res = await fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId, resourceId, mode: 'stub' }) });
+    if (res.ok) {
+      const j = await res.json();
+      if (j.checkoutUrl) window.location.href = j.checkoutUrl;
+      else alert('Purchased! Check your library.');
+    }
   };
   return (
     <main className="p-6">
       <div className="mx-auto max-w-5xl">
         <h1 className="text-2xl font-semibold">Marketplace</h1>
+        <div className="mt-2 text-sm">
+          Payment provider:
+          <select id="provider" className="ml-2 rounded border px-2 py-1">
+            <option value="stripe">Stripe (global)</option>
+            <option value="paystack">Paystack (WA)</option>
+            <option value="flutterwave">Flutterwave (EA)</option>
+          </select>
+        </div>
         {loading ? <p className="mt-4 text-gray-600">Loading…</p> : (
           <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
             {items.map((it) => (
