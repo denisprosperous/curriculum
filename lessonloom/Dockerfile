@@ -12,6 +12,8 @@ RUN npm run build
 FROM node:20-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
+# For Prisma in production with Postgres
+ENV PRISMA_GENERATE_SKIP_AUTOINSTALL=1
 COPY --from=builder /app .
 EXPOSE 3000
 CMD ["npm", "run", "start"]

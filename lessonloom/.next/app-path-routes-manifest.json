@@ -1,1 +1,1 @@
-{"/_not-found/page":"/_not-found","/(auth)/sign-in/page":"/sign-in","/page":"/","/(auth)/sign-up/page":"/sign-up","/schemes/[id]/page":"/schemes/[id]","/schemes/new/page":"/schemes/new","/schemes/page":"/schemes"}
+{"/_not-found/page":"/_not-found","/(auth)/sign-up/page":"/sign-up","/(auth)/sign-in/page":"/sign-in","/page":"/","/schemes/[id]/page":"/schemes/[id]","/schemes/new/page":"/schemes/new","/schemes/page":"/schemes"}
