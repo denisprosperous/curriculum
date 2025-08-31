@@ -13,7 +13,10 @@ export default async function HomePage() {
           {session ? (
             <div className="space-y-2">
               <p className="text-green-700">Signed in as {session.user?.email}</p>
-              <Link href="/planner" className="rounded bg-indigo-600 px-3 py-2 text-white">Open Planner</Link>
+              <div className="space-x-2">
+                <Link href="/planner" className="rounded bg-indigo-600 px-3 py-2 text-white">Open Planner</Link>
+                <Link href="/calendar" className="rounded bg-slate-700 px-3 py-2 text-white">Calendar Editor</Link>
+              </div>
             </div>
           ) : (
             <div className="space-x-3">
