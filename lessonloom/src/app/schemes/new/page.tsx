@@ -23,6 +23,8 @@ type Catalog = {
   }>;
 };
 
+type UserCalendar = { id: string; name: string; year: number };
+
 export default function NewSchemePage() {
   const { status } = useSession();
   const router = useRouter();
@@ -37,6 +39,9 @@ export default function NewSchemePage() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [lessonsPerWeek, setLessonsPerWeek] = useState(5);
+  const [weekdays, setWeekdays] = useState<number[]>([1,3,5]);
+  const [calendars, setCalendars] = useState<UserCalendar[]>([]);
+  const [userCalendarId, setUserCalendarId] = useState("");
 
   useEffect(() => {
     let cancelled = false;
@@ -54,6 +59,20 @@ export default function NewSchemePage() {
     return () => {
       cancelled = true;
     };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    const loadCalendars = async () => {
+      try {
+        const res = await fetch("/api/user-calendars", { cache: "no-store" });
+        if (!res.ok) return;
+        const j = await res.json();
+        if (!cancelled) setCalendars(j.calendars || []);
+      } catch {}
+    };
+    loadCalendars();
+    return () => { cancelled = true; };
   }, []);
 
   const boards = useMemo(() => {
@@ -98,6 +117,8 @@ export default function NewSchemePage() {
           startDate,
           endDate,
           lessonsPerWeek,
+          weekdays,
+          userCalendarId: userCalendarId || undefined,
         }),
       });
       if (!res.ok) {
@@ -236,6 +257,39 @@ export default function NewSchemePage() {
               onChange={(e) => setLessonsPerWeek(parseInt(e.target.value || "0", 10))}
               required
             />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Weekdays</label>
+            <div className="mt-1 grid grid-cols-3 gap-2 sm:grid-cols-7">
+              {["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].map((d, idx) => (
+                <label key={d} className="flex items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={weekdays.includes(idx)}
+                    onChange={(e) => {
+                      setWeekdays((prev) => e.target.checked ? [...prev, idx] : prev.filter((x) => x !== idx));
+                    }}
+                  />
+                  {d}
+                </label>
+              ))}
+            </div>
+            <p className="mt-1 text-xs text-gray-500">Selected weekdays will be used for lesson dates; holidays are skipped.</p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Calendar (optional)</label>
+            <select
+              className="mt-1 w-full rounded border p-2 sm:w-96"
+              value={userCalendarId}
+              onChange={(e) => setUserCalendarId(e.target.value)}
+            >
+              <option value="">None</option>
+              {calendars.map((c) => (
+                <option key={c.id} value={c.id}>{c.name} ({c.year})</option>
+              ))}
+            </select>
           </div>
 
           {error && <p className="text-sm text-red-600">{error}</p>}

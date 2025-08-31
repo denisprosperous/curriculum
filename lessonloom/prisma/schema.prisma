@@ -198,6 +198,7 @@ model SchemeEntry {
   topic       String
   subtopic    String
   objective   String
+  lessonDate  DateTime?
 }
 
 model UserCalendar {

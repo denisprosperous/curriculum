@@ -2,14 +2,15 @@ import Link from "next/link";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/pages/api/auth/[...nextauth]";
 
-async function getSchemes() {
-  const res = await fetch(`${process.env.NEXTAUTH_URL || ""}/api/schemes`, { cache: "no-store" });
-  if (!res.ok) return [] as any[];
+type SchemeListItem = { id: string; createdAt: string; startDate: string; endDate: string; lessonsPerWeek: number; subject: { name: string }; level: { name: string } };
+async function getSchemes(page = 1): Promise<{ schemes: SchemeListItem[]; page: number; totalPages: number }> {
+  const res = await fetch(`${process.env.NEXTAUTH_URL || ""}/api/schemes?page=${page}`, { cache: "no-store" });
+  if (!res.ok) return { schemes: [], page: 1, totalPages: 1 };
   const j = await res.json();
-  return j.schemes as any[];
+  return j;
 }
 
-export default async function SchemesPage() {
+export default async function SchemesPage({ searchParams }: { searchParams?: { [key: string]: string | string[] | undefined } }) {
   const session = await getServerSession(authOptions);
   if (!session) {
     return (
@@ -18,7 +19,8 @@ export default async function SchemesPage() {
       </main>
     );
   }
-  const schemes = await getSchemes();
+  const currentPage = parseInt((Array.isArray(searchParams?.page) ? searchParams?.page[0] : searchParams?.page) || '1', 10) || 1;
+  const { schemes, page, totalPages } = await getSchemes(currentPage);
   return (
     <main className="p-6">
       <div className="mx-auto max-w-4xl">
@@ -30,7 +32,7 @@ export default async function SchemesPage() {
           {schemes.length === 0 && (
             <div className="p-4 text-gray-600">No schemes yet.</div>
           )}
-          {schemes.map((s) => (
+          {schemes.map((s: SchemeListItem) => (
             <Link key={s.id} href={`/schemes/${s.id}`} className="flex items-center justify-between p-4 hover:bg-gray-50">
               <div>
                 <div className="font-medium">{s.subject.name} – {s.level.name}</div>
@@ -39,6 +41,13 @@ export default async function SchemesPage() {
               <div className="text-sm text-gray-500">{new Date(s.createdAt).toLocaleString()}</div>
             </Link>
           ))}
+        </div>
+        <div className="mt-4 flex items-center justify-between text-sm">
+          <div>Page {page} of {totalPages}</div>
+          <div className="flex gap-2">
+            <Link href={`/schemes?page=${Math.max(1, page - 1)}`} className="rounded border px-2 py-1">Previous</Link>
+            <Link href={`/schemes?page=${Math.min(totalPages, page + 1)}`} className="rounded border px-2 py-1">Next</Link>
+          </div>
         </div>
       </div>
     </main>

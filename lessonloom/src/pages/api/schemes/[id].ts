@@ -22,6 +22,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(200).json({ scheme });
   }
 
+  if (req.method === 'PATCH') {
+    const body = req.body as Partial<{ startDate: string; endDate: string; lessonsPerWeek: number }>;
+    const existing = await prisma.scheme.findFirst({ where: { id, userId: session.user.id } });
+    if (!existing) return res.status(404).json({ message: 'Not found' });
+    const updated = await prisma.scheme.update({
+      where: { id },
+      data: {
+        startDate: body.startDate ? new Date(body.startDate) : undefined,
+        endDate: body.endDate ? new Date(body.endDate) : undefined,
+        lessonsPerWeek: typeof body.lessonsPerWeek === 'number' ? body.lessonsPerWeek : undefined,
+      },
+    });
+    return res.status(200).json({ scheme: updated });
+  }
+
   if (req.method === 'DELETE') {
     const existing = await prisma.scheme.findUnique({ where: { id } });
     if (!existing || existing.userId !== session.user.id) return res.status(404).json({ message: 'Not found' });

@@ -32,6 +32,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       children.push(new Paragraph({
         children: [
           new TextRun({ text: `${entry.orderIndex}. `, bold: true }),
+          new TextRun({ text: `${entry.lessonDate ? new Date(entry.lessonDate).toISOString().slice(0,10) + ' · ' : ''}` }),
           new TextRun({ text: `${entry.topic} – ${entry.subtopic}: ${entry.objective}` }),
         ],
       }));

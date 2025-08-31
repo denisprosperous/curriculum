@@ -42,7 +42,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         page = pdf.addPage([595.28, 841.89]);
         y = page.getSize().height - 40;
       }
-      drawText(`${entry.orderIndex}. ${entry.topic} – ${entry.subtopic}: ${entry.objective}`);
+      const dateStr = entry.lessonDate ? new Date(entry.lessonDate).toISOString().slice(0,10) + ' · ' : '';
+      drawText(`${entry.orderIndex}. ${dateStr}${entry.topic} – ${entry.subtopic}: ${entry.objective}`);
     }
     y -= 6;
   }
