@@ -1,6 +1,8 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { prisma } from '@/lib/db';
-import { addDays, eachWeekOfInterval, isSunday } from 'date-fns';
+import { addDays, eachWeekOfInterval, isSunday, isWithinInterval } from 'date-fns';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/pages/api/auth/[...nextauth]';
 
 type GenerateBody = {
   subjectId: string;
@@ -8,10 +10,13 @@ type GenerateBody = {
   startDate: string; // ISO
   endDate: string;   // ISO
   lessonsPerWeek: number;
+  userCalendarId?: string; // optional: to skip holidays
 };
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') return res.status(405).json({ message: 'Method not allowed' });
+  const session = await getServerSession(req, res, authOptions);
+  if (!session?.user?.id) return res.status(401).json({ message: 'Unauthorized' });
   const { subjectId, levelId, startDate, endDate, lessonsPerWeek } = req.body as GenerateBody;
   if (!subjectId || !levelId || !startDate || !endDate || !lessonsPerWeek) {
     return res.status(400).json({ message: 'Missing fields' });
@@ -36,14 +41,41 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const schedule: { week: number; entries: typeof objectives }[] = [];
   for (let w = 1; w <= weeks; w++) schedule.push({ week: w, entries: [] });
 
-  for (let i = 0; i < Math.min(totalSlots, objectives.length); i++) {
-    const weekIndex = Math.floor(i / lessonsPerWeek);
-    schedule[weekIndex]?.entries.push(objectives[i]);
+  // Optionally skip lessons falling on holiday weeks (simplified: if a holiday falls within a given week interval, reduce capacity by 1 for that week)
+  let holidayCountsByWeek: Record<number, number> = {};
+  if (req.body.userCalendarId) {
+    const cal = await prisma.userCalendar.findFirst({
+      where: { id: req.body.userCalendarId, userId: session.user.id },
+      include: { holidays: true },
+    });
+    if (cal) {
+      holidayCountsByWeek = weekStarts.reduce((acc, ws, idx) => {
+        const weekStart = ws;
+        const weekEnd = addDays(ws, 6);
+        const count = cal.holidays.filter((h) =>
+          isWithinInterval(h.date, { start: weekStart, end: weekEnd })
+        ).length;
+        acc[idx] = count;
+        return acc;
+      }, {} as Record<number, number>);
+    }
+  }
+
+  const capacities = schedule.map((_, idx) => Math.max(0, lessonsPerWeek - (holidayCountsByWeek[idx] ?? 0)));
+
+  let objectiveIndex = 0;
+  for (let weekIndex = 0; weekIndex < weeks; weekIndex++) {
+    const cap = capacities[weekIndex] ?? lessonsPerWeek;
+    for (let slot = 0; slot < cap && objectiveIndex < objectives.length; slot++) {
+      schedule[weekIndex]?.entries.push(objectives[objectiveIndex]);
+      objectiveIndex++;
+    }
   }
 
   // Persist scheme
   const scheme = await prisma.scheme.create({
     data: {
+      userId: session.user.id,
       subjectId,
       levelId,
       curriculumId: curriculum.id,

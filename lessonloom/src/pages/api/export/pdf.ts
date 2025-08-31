@@ -1,8 +1,12 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { prisma } from '@/lib/db';
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/pages/api/auth/[...nextauth]';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  const session = await getServerSession(req, res, authOptions);
+  if (!session?.user?.id) return res.status(401).json({ message: 'Unauthorized' });
   const schemeId = (req.query.schemeId as string) || (req.body?.schemeId as string);
   if (req.method !== 'GET' && req.method !== 'POST') return res.status(405).end();
   if (!schemeId) return res.status(400).json({ message: 'Missing schemeId' });
@@ -11,6 +15,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     include: { subject: true, level: true, weeks: { orderBy: { weekNumber: 'asc' }, include: { entries: { orderBy: { orderIndex: 'asc' } } } } },
   });
   if (!scheme) return res.status(404).json({ message: 'Scheme not found' });
+  if (scheme.userId && scheme.userId !== session.user.id) return res.status(403).json({ message: 'Forbidden' });
 
   const pdf = await PDFDocument.create();
   let page = pdf.addPage([595.28, 841.89]); // A4 portrait

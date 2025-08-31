@@ -24,6 +24,13 @@ export default function SignInPage() {
       <div className="mx-auto max-w-sm">
         <h1 className="text-2xl font-semibold">Sign in</h1>
         <form onSubmit={onSubmit} className="mt-6 space-y-4">
+          <button
+            type="button"
+            onClick={() => signIn('google', { callbackUrl: '/' })}
+            className="w-full rounded border px-3 py-2"
+          >
+            Continue with Google
+          </button>
           <input
             type="email"
             placeholder="Email"
