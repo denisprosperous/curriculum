@@ -1,8 +1,12 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { prisma } from '@/lib/db';
 import { Document, Packer, Paragraph, TextRun, HeadingLevel } from 'docx';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/pages/api/auth/[...nextauth]';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  const session = await getServerSession(req, res, authOptions);
+  if (!session?.user?.id) return res.status(401).json({ message: 'Unauthorized' });
   const schemeId = (req.query.schemeId as string) || (req.body?.schemeId as string);
   if (req.method !== 'GET' && req.method !== 'POST') return res.status(405).end();
   if (!schemeId) return res.status(400).json({ message: 'Missing schemeId' });
@@ -11,6 +15,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     include: { subject: true, level: true, weeks: { orderBy: { weekNumber: 'asc' }, include: { entries: { orderBy: { orderIndex: 'asc' } } } } },
   });
   if (!scheme) return res.status(404).json({ message: 'Scheme not found' });
+  if (scheme.userId && scheme.userId !== session.user.id) return res.status(403).json({ message: 'Forbidden' });
 
   const children: Paragraph[] = [];
   children.push(new Paragraph({ text: `${scheme.subject.name} – ${scheme.level.name} Scheme of Work`, heading: HeadingLevel.HEADING_1 }));
@@ -27,6 +32,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       children.push(new Paragraph({
         children: [
           new TextRun({ text: `${entry.orderIndex}. `, bold: true }),
+          new TextRun({ text: `${entry.lessonDate ? new Date(entry.lessonDate).toISOString().slice(0,10) + ' · ' : ''}` }),
           new TextRun({ text: `${entry.topic} – ${entry.subtopic}: ${entry.objective}` }),
         ],
       }));

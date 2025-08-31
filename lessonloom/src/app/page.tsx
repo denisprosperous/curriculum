@@ -11,7 +11,10 @@ export default async function HomePage() {
         <p className="mt-2 text-gray-600">Generate localized, exam-board–aligned schemes of work in minutes.</p>
         <div className="mt-6">
           {session ? (
-            <p className="text-green-700">Signed in as {session.user?.email}</p>
+            <div className="space-x-3">
+              <Link href="/schemes" className="rounded bg-blue-600 px-3 py-2 text-white">My Schemes</Link>
+              <Link href="/schemes/new" className="rounded border px-3 py-2">New Scheme</Link>
+            </div>
           ) : (
             <div className="space-x-3">
               <Link href="/sign-in" className="rounded bg-blue-600 px-3 py-2 text-white">Sign in</Link>
